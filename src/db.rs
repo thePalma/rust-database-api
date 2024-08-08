@@ -4,6 +4,7 @@ use rocket::http::Status;
 use rocket::request::FromRequest;
 use rocket::{Request, State, request::Outcome};
 use std::ops::Deref;
+use std::ops::DerefMut;
 use diesel::r2d2::ConnectionManager;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
@@ -36,5 +37,11 @@ impl Deref for DbConn {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for DbConn {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }

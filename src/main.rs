@@ -1,6 +1,4 @@
-#[macro_use]
 extern crate diesel;
-#[macro_use]
 extern crate dotenv;
 extern crate r2d2;
 extern crate r2d2_diesel;
@@ -12,13 +10,14 @@ extern crate serde;
 use dotenv::dotenv;
 use rocket::{Build, Rocket};
 use std::env;
-use diesel::{prelude::*, result};
-use diesel::pg::PgConnection;
+use routes::*;
 
 mod schema;
 mod models;
 mod db;
 mod static_files;
+mod routes;
+
 
 #[launch]
 fn rocket() -> Rocket<Build> {
@@ -30,5 +29,10 @@ fn rocket() -> Rocket<Build> {
 
     rocket::build()
         .manage(pool)
-        .mount("/", routes![static_files::index, static_files::all])
+        .mount(
+            "/api/v1/",
+            routes![index, new, show, delete, author, update],
+        )
+        .mount("/", routes![static_files::all, static_files::index])
+        .register("/", catchers![not_found])
 }
