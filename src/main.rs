@@ -2,31 +2,33 @@
 extern crate diesel;
 #[macro_use]
 extern crate dotenv;
+extern crate r2d2;
+extern crate r2d2_diesel;
+#[macro_use]
+extern crate rocket;
+#[macro_use]
+extern crate serde;
 
 use dotenv::dotenv;
+use rocket::{Build, Rocket};
 use std::env;
-use diesel::prelude::*;
+use diesel::{prelude::*, result};
 use diesel::pg::PgConnection;
 
 mod schema;
 mod models;
+mod db;
+mod static_files;
 
-fn main() {
+#[launch]
+fn rocket() -> Rocket<Build> {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
-    let connection = &mut PgConnection::establish(&database_url).unwrap();
+    let pool = db::init_pool(&database_url);
 
-    let book = models::NewBook {
-        title: String::from("The Catcher in the Rye"),
-        author: String::from("J.D. Salinger"),
-        published: true,
-    };
-
-    if models::Book::insert(book, connection) {
-        println!("Book inserted");
-    } else {
-        println!("Error inserting book");
-    }
+    rocket::build()
+        .manage(pool)
+        .mount("/", routes![static_files::index, static_files::all])
 }
